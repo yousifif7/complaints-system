@@ -1,0 +1,80 @@
+         ______
+/* cards style */
+ div p{
+            font-size:18px;
+            font-weight: 400;
+        }
+        .card{
+            margin-block: 10px; 
+         }
+         .intro{
+            border-bottom: solid #0d6d8e 2px;
+            padding: 5px;
+
+         }
+         .intro-text{
+            text-align: right;
+
+         }       
+         div .text{
+            text-align: right;
+         }
+
+-------
+/* form style */
+
+.form{
+ width: auto;
+
+}
+  div p{
+            text-align: center;
+        }
+        tr{
+            text-align: right;
+        }
+        div .text{
+            text-align: center;
+         }
+         .form{
+            margin-top :10px;
+            width: 100%;
+            border: solid 2px #0d6d8e;
+            padding: 20px;
+         }
+         input, form, select{
+          text-align: right;
+         }
+         .button:hover{
+          background-color: #0d6d8e;
+          color: #fff;
+          border: #0d6d8e;
+          
+         }
+         .button{
+          color: #0d6d8e;
+          border: solid 1px #0d6d8e;
+          padding: 7px;
+          background-color: #fff;
+          border-radius: 5px;
+          text-decoration: none;
+         }
+         .fileup{
+            display: flex;
+            flex-direction: row-reverse;
+            text-align: left;
+         }
+
+---
+/* Main style */
+*{
+        font-family: 'Cairo', sans-serif;
+    }
+    footer {
+      position: relative;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+    }
+    
+    
