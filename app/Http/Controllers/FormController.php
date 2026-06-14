@@ -2,161 +2,138 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ComplaintStatus;
+use App\Http\Requests\StoreComplaintRequest;
 use App\Models\Category;
+use App\Models\ComplaintNote;
 use App\Models\FormType;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Http\Requests\myformRequest;
 use App\Models\RequestType;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\File; 
+use App\Support\ComplaintFileStorage;
+use Illuminate\Http\Request;
 
 class FormController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function requests(Request $request)
     {
-        $myrequest = FormType::all();
-        $category = Category::all();
-        $requesttype = RequestType::all();
-        return view('formsview',compact('myrequest','category','requesttype'));
+        $query = FormType::with(['category', 'requestType'])
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('ticket_number', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $myrequest = $query->paginate(25)->withQueryString();
+        $category = Category::orderBy('catName')->get();
+        $requesttype = RequestType::orderBy('request_name')->get();
+
+        return view('formsview', compact('myrequest', 'category', 'requesttype'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function store(StoreComplaintRequest $request)
     {
+        $fileName = '';
 
-    }
+        if ($request->hasFile('userfile')) {
+            $fileName = ComplaintFileStorage::store($request->file('userfile'));
+        }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        $this->validate($request,[
-            'name' => 'required',
-            'address' => 'required',
-            'phone' => 'required|max:10|min:10',
-            'userfile' => 'mimes:png,jpg,jpeg,pdf|max:10000',
+        $complaint = FormType::create([
+            'name' => $request->name,
+            'address' => $request->address,
+            'phone' => $request->phone,
+            'content' => $request->content,
+            'file' => $fileName,
+            'status' => ComplaintStatus::ACTIVE,
+            'requesttype_id' => $request->formtype,
+            'category_id' => $request->category,
         ]);
 
-        if($request->hasFile('userfile')){
-            $path= $request->file('userfile')->store('userFiles','files');
-
-            FormType::create([
-                'name' => $request->name,
-                'address' => $request->address ,
-                'phone' => $request->phone ,
-                'content' => $request->content ,
-                'file' => $path ,
-                'status' => $request->status ,
-                'requesttype_id' => $request->formtype,
-                'category_id' => $request->category
-            ]);
-        }else{
-
-            FormType::create([
-                'name' => $request->name,
-                'address' => $request->address ,
-                'phone' => $request->phone ,
-                'content' => $request->content ,
-                'file' => '' ,
-                'status' => $request->status ,
-                'requesttype_id' => $request->formtype,
-                'category_id' => $request->category
-            ]);
-        }
-
-        return redirect()->route('category.index')->with('success','Form posted');
+        return redirect()
+            ->route('complaints.track.show', $complaint->ticket_number)
+            ->with('success', __('messages.complaint_submitted'))
+            ->with('ticket_number', $complaint->ticket_number);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        $myrequest = FormType::findorFail($id);
-        $category = Category::all();
-        $requesttype = RequestType::all();
-        return view('viewDetails',compact('myrequest','category','requesttype'));
+        $myrequest = FormType::with(['category', 'requestType', 'notes.user'])->findOrFail($id);
+
+        return view('viewDetails', compact('myrequest'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Request $request, $id)
-    {
-        $form = FormType::findorFail($id);
-        $form->status = $request->status;
-        $form->save();
-        return redirect()->route('form.index');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $form = FormType::findorFail($id);
+        $request->validate([
+            'status' => 'required|in:1,2,3',
+            'internal_notes' => 'nullable|string|max:5000',
+            'priority' => 'nullable|in:low,medium,high,urgent',
+        ]);
+
+        $form = FormType::findOrFail($id);
+        $oldStatus = $form->status;
+
         $form->status = $request->status;
+        $form->priority = $request->priority ?? $form->priority;
+
+        if ($request->filled('internal_notes')) {
+            $form->internal_notes = $request->internal_notes;
+            ComplaintNote::create([
+                'form_type_id' => $form->id,
+                'user_id' => auth()->id(),
+                'note' => $request->internal_notes,
+                'type' => 'internal',
+            ]);
+        }
+
         $form->save();
-        return redirect()->route('form.index');
+
+        if ($oldStatus !== $form->status) {
+            ComplaintNote::create([
+                'form_type_id' => $form->id,
+                'user_id' => auth()->id(),
+                'note' => __('messages.status_changed_to', ['status' => ComplaintStatus::label($form->status)]),
+                'type' => 'status_change',
+            ]);
+        }
+
+        return redirect()->route('admin.forms')->with('success', __('messages.complaint_updated'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        $form = FormType::findorFail($id);
-        $image_path = public_path('userFiles/'.$form->file);
-        if ($form::exists(public_path($image_path))) {
-            File::delete($image_path);        
-        }
+        $form = FormType::findOrFail($id);
+
+        ComplaintFileStorage::delete($form->file);
+
         $form->delete();
-        return redirect()->route('form.index');
+
+        return redirect()->route('admin.forms')->with('success', __('messages.complaint_deleted'));
     }
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function deleteAll(){
-            // $form= FormType::file();
-            // $image_path = public_path('userFiles/'.$form->file);
-            // if ($form::exists(public_path($image_path))) {
-            //     File::delete($image_path);        
-            // }
-        FormType::truncate();
-        return redirect()->route('form.index');
+
+    public function deleteAll()
+    {
+        FormType::query()->delete();
+
+        return redirect()->route('admin.forms')->with('success', __('messages.all_complaints_deleted'));
     }
-    public function deleteCompleted(){
-        $form= FormType::where('status','2')->delete();
-        return redirect()->route('form.index');
+
+    public function deleteCompleted()
+    {
+        FormType::where('status', ComplaintStatus::COMPLETED)->delete();
+
+        return redirect()->route('admin.forms')->with('success', __('messages.completed_complaints_deleted'));
     }
 }

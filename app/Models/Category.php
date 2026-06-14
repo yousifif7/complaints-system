@@ -2,21 +2,29 @@
 
 namespace App\Models;
 
-
-use App\Models\FormType;
-use App\Models\RequestType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
+    protected $fillable = ['catName', 'catName_en'];
 
-    protected $fillable=['id','catName'];
-
-    public function FormType() {
-        return $this->hasMany(FormType::class,'id');
+    public function formTypes(): HasMany
+    {
+        return $this->hasMany(FormType::class, 'category_id');
     }
-    public function RequestType() {
-        return $this->hasMany(RequestType::class,'id');
+
+    public function requestTypes(): HasMany
+    {
+        return $this->hasMany(RequestType::class, 'category_id');
+    }
+
+    public function getLocalizedNameAttribute(): string
+    {
+        if (app()->getLocale() === 'en' && filled($this->catName_en)) {
+            return $this->catName_en;
+        }
+
+        return $this->catName;
     }
 }

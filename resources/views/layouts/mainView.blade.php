@@ -1,67 +1,67 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="{{ $htmlLang }}" dir="{{ $htmlDir }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>@yield('title')</title>
-    <!-- CSS only -->
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-<link rel="shortcut icon" type="image/png" href="/files/general/file/favicon1441129132.png"/>
-<link rel="shortcut icon" type="image/png" href="http://www.qarara.ps/files/general/file/favicon1441129132.png"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"> 
-<link rel="stylesheet" href="/style.css"> 
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap4.min.css">
-
-    
-    <script src="https://kit.fontawesome.com/7ba6153525.js" crossorigin="anonymous"></script>
-    @yield('styles')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', __('messages.admin_dashboard'))</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="/style.css?v=20260614">
     <style>
-        *{
-            font-family: 'Cairo', sans-serif;
-        }
-        .nav-link:hover{
-            color: red;
-        }
-        </style>
-    </head>
+        :root { --primary-color: {{ $appSettings->primary_color ?? '#0d6d8e' }}; }
+        * { font-family: 'Cairo', sans-serif; }
+        .admin-nav { background: #f8f9fa; border-bottom: 2px solid var(--primary-color); }
+        .admin-nav .nav-link.active { color: var(--primary-color) !important; font-weight: 700; }
+        .stat-card { border-inline-start: 4px solid var(--primary-color); }
+        [dir="ltr"] .form-control, [dir="ltr"] label { text-align: left; }
+        [dir="rtl"] .form-control, [dir="rtl"] label { text-align: right; }
+    </style>
+    @yield('styles')
+</head>
 <body>
-    
-    <div class="navbar-header">
-        <nav class="navbar navbar-light bg-dark">
-            <a class="text-light" >@yield('op')</a>
-            <a class="text-light " href="<?= url('/complaints'); ?>" ><b>الخدمات الإلكترونية</b></a>
-            <a class="text-light"><img src="/bg.png" height="40px" class="d-inline-block align-top bg-dark" alt=""></a>    
-        </nav> 
-    <ul class="nav justify-content-center bg-light">
-        <li class="nav-item">
-          <a class="nav-link @yield('active1') " href="<?= url('admins/forms');?>">الطلبات</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link @yield('active2')" href="<?= url('admins/createcat');?>">الأقسام</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link @yield('active3')" href="<?= url('admins/createreq_type');?>">فئات الطلبات</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link"></a>
-        </li>
-      </ul>
-</div>      
-<br>    
+
+<nav class="navbar navbar-dark" style="background-color: var(--primary-color);">
+    <span class="navbar-brand">@yield('op', __('messages.admin_panel')) — {{ $appSettings->localized_name ?? __('messages.app_name') }}</span>
+    <div class="d-flex align-items-center gap-2">
+        @include('partials.language-switcher')
+        <a href="{{ route('complaints.index') }}" class="btn btn-sm btn-outline-light" target="_blank">{{ __('messages.public_site') }}</a>
+        <form action="{{ route('logout') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-light">{{ __('messages.logout') }}</button>
+        </form>
+    </div>
+</nav>
+
+<ul class="nav admin-nav justify-content-center py-2">
+    <li class="nav-item"><a class="nav-link @yield('active_dashboard')" href="{{ route('admin.dashboard') }}">{{ __('messages.admin_dashboard') }}</a></li>
+    <li class="nav-item"><a class="nav-link @yield('active1')" href="{{ route('admin.forms') }}">{{ __('messages.requests') }}</a></li>
+    <li class="nav-item"><a class="nav-link @yield('active2')" href="{{ route('admin.categories.create') }}">{{ __('messages.departments') }}</a></li>
+    <li class="nav-item"><a class="nav-link @yield('active3')" href="{{ route('admin.requesttypes.create') }}">{{ __('messages.request_categories') }}</a></li>
+    <li class="nav-item"><a class="nav-link @yield('active4')" href="{{ route('admin.settings') }}">{{ __('messages.settings') }}</a></li>
+</ul>
+
+<div class="container-fluid py-3">
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
     @yield('content')
-    
+</div>
 
-    <!-- JavaScript Bundle with Popper -->
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-    <script src="/js/bootstrap.js"></script>
-    <script src="/js/popper.min.js"></script>
-    <script src="/js/jquery-3.6.0.min.js"></script>
-    @yield('scripts')
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    window.autoTranslateConfig = {
+        url: @json(route('admin.translate')),
+        enabled: @json(config('complaints.auto_translate_enabled', true)),
+    };
+</script>
+<script src="/js/auto-translate.js"></script>
+<script src="/js/confirm-actions.js"></script>
+<script src="/js/form-select-rtl.js?v=20260614"></script>
+@yield('scripts')
 </body>
 </html>
