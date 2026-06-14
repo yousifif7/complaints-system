@@ -2,9 +2,10 @@
 /public/build
 /public/hot
 /public/storage
+/public/userFiles/**
+!/public/userFiles/.gitkeep
 /storage/*.key
 /vendor
-.env
 .env.backup
 .phpunit.result.cache
 Homestead.json
@@ -14,3 +15,4 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+config.bat

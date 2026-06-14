@@ -2,106 +2,76 @@
 
 @section('styles')
   <style>
-    footer {
-      
-    }
+    .complaint-form-page { padding-bottom: 2rem; }
   </style>
 @endsection
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title> تقديم طلب | {{$cat->catName}}</title>
-</head>
-<body>
-    <body>
-      {{-- Cat is for category --}}
-      
-        @section('content')
-        @section('op') {{$cat->catName}} @endsection
 
-        <br><hr>
-        <h2 style="text-align:center;"> {{$cat->catName}}</h2>
-        <hr>
-        <div class="row justify-content-center " style="margin:auto;">
-          <div class="col-md-8 order-md-1">
-    
-            <form class="form" action="{{route('form.store')}}" method="post" enctype="multipart/form-data">
-              @csrf
+@section('content')
+@section('op') {{ $cat->localized_name }} @endsection
 
-              @if (count($errors) > 0)
-              <div class="alert alert-danger">
-                  <ul>
-                      @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                      @endforeach
-                  </ul>
-              </div>
+@section('title', __('messages.submit_request_for', ['department' => $cat->localized_name]))
+
+<br><hr>
+<h2 class="text-center">{{ $cat->localized_name }}</h2>
+<hr>
+
+<div class="row justify-content-center complaint-form-page">
+    <div class="col-md-8 order-md-1">
+        <form class="form" action="{{ route('form.store') }}" method="post" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="category" value="{{ $cat->id }}">
+
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
 
-              <div class="form-group" >
-                <input type="hidden" class="form-control" name="category" value="{{$cat->id}}">
-              </div>
-              <div class="form-group" >
-                <input type="hidden" class="form-control" name="status" value="1">
-              </div>
-              <div class="form-group" >
-                <label for="exampleFormControlInput1">اسم المواطن</label>
-                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="ادخل اسمك رباعياً">
-                    @error('name')
-                      <div class="alert alert-danger">يرجى إدخال الاسم</div>
-                    @enderror
-              </div>
-              <br>
-              <div class="form-group" >
-                <label for="exampleFormControlInput1">رقم الهاتف المحمول</label>
-                <input type="text" class="form-control @error('phone') is-invalid @enderror" name="phone" placeholder="ادخل رقم هاتفك" >
-                <small class="form-text text-success">فقط رقم الهاتف المحمول 
-                  (جوال / وطنية)</small><br>
-                  @error('phone')
-                    <div class="alert alert-danger">يرجى إدخال رقم الهاتف بشكلٍ صحيح</div>
-                  @enderror
-              </div>
-              <div class="form-group">
-                <label for="exampleFormControlInput1">العنوان</label>
-                <input type="text" class="form-control @error('address') is-invalid @enderror" name="address" placeholder="ادخل محل إقامتك">
-                  @error('address')
-                    <div class="alert alert-danger">يرجى إدخال العنوان</div>
-                  @enderror
-              </div>
-              <br>
-              <div class="form-group">
-                <label for="exampleFormControlSelect1">اختر فئة الطلب</label>
-                <select class="form-control " name="formtype">
-                  <option></option>
-                  @foreach ($reqtype as $reqtype )
-                   @if ($cat->id === $reqtype->category_id)
-                     <option value="{{$reqtype->id}}">{{$reqtype->request_name}}</option>
-                     @endif
-                  @endforeach
+            <div class="form-group mb-3">
+                <label>{{ __('messages.citizen_name') }}</label>
+                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="{{ __('messages.citizen_name_placeholder') }}" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>{{ __('messages.mobile_phone') }}</label>
+                <input type="text" class="form-control @error('phone') is-invalid @enderror" name="phone" value="{{ old('phone') }}" placeholder="{{ __('messages.phone_placeholder') }}" required>
+                <small class="form-text text-muted">{{ __('messages.phone_track_hint') }}</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>{{ __('messages.address') }}</label>
+                <input type="text" class="form-control @error('address') is-invalid @enderror" name="address" value="{{ old('address') }}" placeholder="{{ __('messages.address_placeholder') }}" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>{{ __('messages.choose_request_category') }}</label>
+                <select class="form-select @error('formtype') is-invalid @enderror" name="formtype" required>
+                    <option value="">{{ __('messages.select') }} --</option>
+                    @foreach ($reqtypes as $type)
+                        <option value="{{ $type->id }}" @selected(old('formtype') == $type->id)>{{ $type->localized_name }}</option>
+                    @endforeach
                 </select>
-              </div>
-              <br>
-              <div class="form-group">
-                <label for="exampleFormControlTextarea1">موضوع الطلب</label>
-                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="content"></textarea>
-              </div>
-              <br>
-              <label for="exampleFormControlSelect1">ارفق ملفًا أو صورة</label>
-              <div class="input-group mb-3 file">
-                <input type="file" class="form-control fileup" name="userfile" multiple><br><br>
-              </div><br>           
-            <button class="button btn-center w-100" name="submit" type="submit" style="float: center;">تأكيد الطلب</button><br><br>
-            {{-- <button class="btn btn-outline-primary btn-center w-100" name="submit" style="float: center;">تأكيد الطلب</button> --}}
-          </form>
-          </div>
-        </div>
-       
-        <br><br>
-        
-        @endsection
-    </body>
-</body>
-</html>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>{{ __('messages.request_content') }}</label>
+                <textarea class="form-control @error('content') is-invalid @enderror" rows="4" name="content" required>{{ old('content') }}</textarea>
+            </div>
+
+            <div class="form-group mb-3">
+                <label>{{ __('messages.attach_file') }}</label>
+                <input type="file" class="form-control" name="userfile" accept=".png,.jpg,.jpeg,.pdf">
+            </div>
+
+            <button class="button btn-center w-100" type="submit" style="background-color: {{ $appSettings->primary_color ?? '#0d6d8e' }}; color: white; border: none; padding: 10px;">
+                {{ __('messages.confirm') }}
+            </button>
+        </form>
+    </div>
+</div>
+<br><br>
+@endsection

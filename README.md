@@ -1,64 +1,131 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Complaints Management System
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A white-label Laravel complaints and citizen requests portal — ready to deploy for municipalities, organizations, and service providers.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Public Portal (Citizens)
+- Browse departments and submit complaints/requests
+- File attachments (images, PDF)
+- Unique ticket numbers for every submission
+- **Track complaint status** using ticket number + phone number
+- Fully customizable branding (name, colors, logo, messages)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Admin Panel
+- Secure login with hashed passwords
+- Dashboard with statistics and recent activity
+- Manage complaints with search, filters, and pagination
+- Status workflow: Active → Pending → Completed
+- Priority levels (low, medium, high, urgent)
+- Internal notes and activity log per complaint
+- CSV export
+- Department and request-type management
+- White-label settings panel
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+- PHP 8.0+
+- Composer
+- MySQL 5.7+ / MariaDB
+- Node.js (optional, for Vite assets)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Installation
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+# 1. Clone and install dependencies
+composer install
 
-## Laravel Sponsors
+# 2. Environment setup
+cp .env.example .env
+php artisan key:generate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+# 3. Configure database in .env
+DB_DATABASE=complaints
+DB_USERNAME=root
+DB_PASSWORD=your_password
 
-### Premium Partners
+# 4. Configure branding (optional)
+COMPLAINTS_ORG_NAME="بلدية المدينة"
+COMPLAINTS_ADMIN_EMAIL=admin@example.com
+COMPLAINTS_ADMIN_PASSWORD=your_secure_password
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+# 5. Run migrations and seed demo data
+php artisan migrate
+php artisan db:seed
 
-## Contributing
+# 6. Create upload directory
+mkdir -p public/userFiles
+chmod 775 public/userFiles
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 7. Start the server
+php artisan serve
+```
 
-## Code of Conduct
+## Default Access
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Role  | URL            | Credentials (after seed)        |
+|-------|----------------|----------------------------------|
+| Admin | `/admins`      | `admin@example.com` / `password` |
+| Public| `/` or `/complaints` | No login required          |
 
-## Security Vulnerabilities
+**Change the default password immediately after first login.**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## URLs
+
+| Path | Description |
+|------|-------------|
+| `/` | Public homepage — department selection |
+| `/complaints/cat/{id}` | Submit a complaint for a department |
+| `/track` | Citizen complaint tracking |
+| `/admins` | Admin login |
+| `/admins/dashboard` | Admin dashboard |
+| `/admins/forms` | Complaints list |
+| `/admins/settings` | Branding & system settings |
+
+## White-Label Configuration
+
+Configure via **Admin → Settings** or `.env`:
+
+- `COMPLAINTS_ORG_NAME` — Organization name (Arabic)
+- `COMPLAINTS_PRIMARY_COLOR` — Theme color (hex)
+- `COMPLAINTS_WELCOME_MESSAGE` — Homepage message
+- `COMPLAINTS_FOOTER_TEXT` — Footer copyright text
+
+Upload logo and header image from the admin settings panel.
+
+## Selling / Licensing
+
+This project is structured as a **deployable bundle** per client:
+
+1. Clone the repo for each client deployment
+2. Run `php artisan db:seed` with client-specific `.env` values
+3. Customize branding via admin settings
+4. Deploy to client's server (shared hosting or VPS)
+
+### Suggested pricing tiers
+
+| Tier | Includes |
+|------|----------|
+| Starter | Single deployment, branding, 1 admin |
+| Business | + CSV export, tracking portal, priority workflow |
+| Enterprise | + Custom domain, SMS/email integration, API (roadmap) |
+
+## Roadmap (Next Version)
+
+- [ ] Email notifications on submission and status change
+- [ ] SMS via Vonage (packages already included)
+- [ ] Multi-tenant SaaS mode
+- [ ] REST API with Sanctum
+- [ ] Role-based permissions (agent, supervisor)
+- [ ] Laravel 11 upgrade
+
+## Tech Stack
+
+- Laravel 9
+- Bootstrap 5
+- MySQL
+- Blade templates (RTL Arabic UI)
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT — Free to use and resell as part of client projects.

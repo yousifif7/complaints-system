@@ -1,8 +1,8 @@
 {
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "description": "White-label complaints and citizen requests management system built with Laravel.",
+    "keywords": ["laravel", "complaints", "ticketing", "citizen-portal", "municipality"],
     "license": "MIT",
     "require": {
         "php": "^8.0.2",

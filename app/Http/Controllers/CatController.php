@@ -2,96 +2,84 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
-use App\Models\FormType;
 use App\Models\RequestType;
+use App\Services\TranslationService;
 use Illuminate\Http\Request;
 
 class CatController extends Controller
 {
-    
-    public function index(){
-        $category = Category::all();
-
-        return view('categories.index',compact('category'));
-    }
-    public function cat($id){
-        $cat = Category::findorFail($id);
-        $reqtype = RequestType::all();
-
-        return view('layouts.cat',compact('cat','reqtype'));
+    public function __construct(private TranslationService $translator)
+    {
     }
 
-    public function create(){
-        $category = Category::all();
-        return view('createcat',compact('category'));
+    public function index()
+    {
+        $categories = Category::orderBy('catName')->get();
+
+        return view('categories.index', compact('categories'));
     }
 
-    public function storeCat(Request $request){
-        $category = Category::all();
-        $this->validate($request,[
-            'createdCatName' => 'required',
-        ]);
+    public function cat($id)
+    {
+        $cat = Category::findOrFail($id);
+        $reqtypes = RequestType::where('category_id', $cat->id)->orderBy('request_name')->get();
+
+        return view('layouts.cat', compact('cat', 'reqtypes'));
+    }
+
+    public function create()
+    {
+        $categories = Category::orderBy('catName')->get();
+
+        return view('createcat', compact('categories'));
+    }
+
+    public function storeCat(StoreCategoryRequest $request)
+    {
+        $names = $this->translator->resolvePair(
+            $request->createdCatName,
+            $request->createdCatName_en
+        );
+
         Category::create([
-           'catName' => $request->createdCatName
+            'catName' => $names['ar'],
+            'catName_en' => $names['en'] ?: null,
         ]);
 
-        return redirect()->route('category.create');
+        return redirect()->route('admin.categories.create')->with('success', __('messages.department_added'));
     }
-     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
     public function edit($id)
     {
-        $category = Category::findorFail($id);
-        return view('editing.catedit',compact('category'));
+        $category = Category::findOrFail($id);
+
+        return view('editing.catedit', compact('category'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $category = Category::findorFail($id);
-        $category->catName = $request->createdCatName;
+        $request->validate([
+            'createdCatName' => 'required|string|max:255',
+            'createdCatName_en' => 'nullable|string|max:255',
+        ]);
+
+        $arabic = trim($request->createdCatName);
+        $english = trim($request->createdCatName_en ?? '');
+
+        $category = Category::findOrFail($id);
+        $category->catName = $arabic;
+        $category->catName_en = $english !== '' ? $english : null;
         $category->save();
-        return redirect()->route('category.create');
+
+        return redirect()->route('admin.categories.create')->with('success', __('messages.department_updated'));
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Request $request,$id)
-    {
-        $category = Category::findorFail($id);
-        $category->catName = $request->createdCatName;
-        $category->save();
-        return redirect()->route('category.create');
-    }
-    
-     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        
-        $category_id = $id;
-        $category = Category::findorFail($id)->delete();
-        return redirect()->route('category.create');
-    }
+        Category::findOrFail($id)->delete();
 
-   
+        return redirect()->route('admin.categories.create')->with('success', __('messages.department_deleted'));
+    }
 }

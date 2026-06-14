@@ -1,106 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $htmlLang }}" dir="{{ $htmlDir }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>تفاصيل طلب</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-    <link rel="shortcut icon" type="image/png" href="/files/general/file/favicon1441129132.png"/>
-    <link rel="shortcut icon" type="image/png" href="http://www.qarara.ps/files/general/file/favicon1441129132.png"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"> 
-    <link rel="stylesheet" href="/style.css"> 
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap4.min.css">
-
+    <title>{{ __('messages.request_details') }} {{ $myrequest->ticket_number }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        *{
-        font-family: 'Cairo', sans-serif;
-            }
-        h6,p{
-            text-align: right;
-        }
-        .td-header{
-            text-align: center;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-        table, th, td,tr {
-            border: 3px solid black;
-        }
-    
+        * { font-family: 'Cairo', sans-serif; }
+        table, th, td { border: 2px solid #333 !important; }
+        .td-header { text-align: center; font-weight: bold; }
     </style>
-
 </head>
-<body>
-    <?php 
-        $cat= App\Models\Category::find($myrequest->category_id);
-        $req= App\Models\RequestType::find($myrequest->requesttype_id);?>
+<body class="p-4">
+    @php
+        $headerImage = !empty($appSettings->header_image_path)
+            ? asset('userFiles/' . $appSettings->header_image_path)
+            : '/header.jpg';
+    @endphp
 
-    <div style="" class="container">
     <div class="container">
-        <img src="/header.jpg">
-        <table class="table" style="">
-            <thead>
-                <tr class="tr">
-                    <td class="td-header"><b>تاريخ الطلب : {{date_format($myrequest->created_at,'d:m:Y')}}</b></td>
-                    <td class="td-header"><b>فئة الطلب : {{$req->request_name}}</b>
-                    </td>
-                    <td class="td-header"><b>رقم الطلب : {{$cat->id."0".$req->id."0".$myrequest->id}}</b>
-                    </td>
-                </tr>
-            </thead>
+        @if(file_exists(public_path(parse_url($headerImage, PHP_URL_PATH) ?? $headerImage)))
+            <img src="{{ $headerImage }}" class="w-100 mb-3" alt="header">
+        @endif
+
+        <table class="table">
+            <tr>
+                <td class="td-header">{{ __('messages.request_date') }}: {{ $myrequest->created_at?->format('d/m/Y') }}</td>
+                <td class="td-header">{{ __('messages.request_type') }}: {{ $myrequest->requestType?->localized_name }}</td>
+                <td class="td-header">{{ __('messages.ticket_number') }}: {{ $myrequest->ticket_number ?? $myrequest->legacy_reference }}</td>
+            </tr>
         </table>
-        
-        <table class="table" >
-            <tbody>
+
+        <table class="table">
             <tr>
-                <td><b>حالة الطلب: </b>
-                    @if ($myrequest->status=="1")نشطة 
-                    @elseif ($myrequest->status=="2")مكتملة 
-                    @elseif ($myrequest->status=="3")عالقة 
-                    @endif</td>
-                    <td><b>نوع الطلب: </b>{{$req->request_name}}</td>
-                    <td><b>القسم المختص  : </b>{{$cat->catName }}</td>
+                <td><b>{{ __('messages.request_status') }}:</b> {{ $myrequest->status_label }}</td>
+                <td><b>{{ __('messages.priority') }}:</b> {{ $myrequest->priority_label }}</td>
+                <td><b>{{ __('messages.department') }}:</b> {{ $myrequest->category?->localized_name }}</td>
             </tr>
             <tr>
-                <td colspan="2"><b>رقم الهاتف : </b>{{$myrequest->phone}}</td>
-                <td colspan="1"><b>الاسم: </b>{{$myrequest->name}}</td>
+                <td colspan="2"><b>{{ __('messages.phone_number') }}:</b> {{ $myrequest->phone }}</td>
+                <td><b>{{ __('messages.name') }}:</b> {{ $myrequest->name }}</td>
             </tr>
             <tr>
-                <td colspan="3"><b>تفاصيل الطلب : </b> {{$myrequest->content}}</td>
+                <td colspan="3"><b>{{ __('messages.address') }}:</b> {{ $myrequest->address }}</td>
             </tr>
+            <tr>
+                <td colspan="3"><b>{{ __('messages.request_details') }}:</b> {{ $myrequest->content }}</td>
+            </tr>
+            @if($myrequest->internal_notes && auth()->check())
+                <tr>
+                    <td colspan="3"><b>{{ __('messages.internal_notes') }}:</b> {{ $myrequest->internal_notes }}</td>
+                </tr>
+            @endif
             <tr>
                 <td colspan="3">
-                    <div class="" style="text-align: right; ">
-                        <p style="font-style:normal; font-weight:bold">مرفقات <br>
-                            @if ($myrequest->file !== '')    
-                            <a target="_blank" href="{{asset('userFiles/'.$myrequest->file)}}">
-                                <img src="{{asset('userFiles/'.$myrequest->file)}}" style="height: 450px; ">
-                            </a>
-                        @else
-                        <p style="color: red; font-style:oblique; font-weight:bold">ما من مرفقات لعرضها</p>                   
-                        @endif
-                        </a></p>
-                    </div>
+                    <b>{{ __('messages.attachments') }}:</b><br>
+                    @if ($myrequest->file)
+                        <a target="_blank" href="{{ $myrequest->file_url }}">
+                            @if($myrequest->isPdfAttachment())
+                                {{ __('messages.pdf') }}
+                            @else
+                                <img src="{{ $myrequest->file_url }}" style="max-height: 400px;" class="mt-2">
+                            @endif
+                        </a>
+                    @else
+                        <span class="text-muted">{{ __('messages.no_attachments') }}</span>
+                    @endif
                 </td>
             </tr>
-            </tbody>
         </table>
-        
 
+        @if(auth()->check() && $myrequest->notes->count())
+            <h5>{{ __('messages.activity_log') }}</h5>
+            <ul class="list-group mb-3">
+                @foreach($myrequest->notes as $note)
+                    <li class="list-group-item">
+                        <small class="text-muted">{{ $note->created_at?->format('Y-m-d H:i') }}</small> —
+                        {{ $note->note }}
+                        @if($note->user) <em>({{ $note->user->name }})</em> @endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
 
+        <button onclick="window.print()" class="btn btn-primary">{{ __('messages.print') }}</button>
     </div>
-
-    </div>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-    <script src="/js/bootstrap.js"></script>
-    <script src="/js/popper.min.js"></script>
-    <script src="/js/jquery-3.6.0.min.js"></script>
 </body>
 </html>
