@@ -1,59 +1,59 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="{{ $htmlLang }}" dir="{{ $htmlDir }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>@yield('title')</title>
-    <!-- CSS only -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
-<link rel="shortcut icon" type="image/png" href="/files/general/file/favicon1441129132.png"/>
-<link rel="shortcut icon" type="image/png" href="http://www.qarara.ps/files/general/file/favicon1441129132.png"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"> 
-<link rel="stylesheet" href="/style.css"> 
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap4.min.css">
-
-@yield('styles')
-       
-<script src="https://kit.fontawesome.com/7ba6153525.js" crossorigin="anonymous"></script>
-</head>
-<style>
-    *{
-        font-family: 'Cairo', sans-serif;
-    }
+    <title>@yield('title', $appSettings->localized_name ?? __('messages.app_name'))</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css?v=20260614">
+    <style>
+        :root { --primary-color: {{ $appSettings->primary_color ?? '#0d6d8e' }}; }
+        * { font-family: 'Cairo', sans-serif; }
+        .navbar-brand-area { background-color: var(--primary-color); }
+        footer { background-color: var(--primary-color); color: white; }
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        .page-content { flex: 1 0 auto; }
+        [dir="ltr"] .form-control:not([type="file"]), [dir="ltr"] .form-select, [dir="ltr"] label, [dir="ltr"] .form-text { text-align: left; }
+        [dir="rtl"] .form-control:not([type="file"]), [dir="rtl"] label, [dir="rtl"] .form-text { text-align: right; }
     </style>
+    @yield('styles')
+</head>
 <body>
 
-    {{-- Navigation bar --}}
-    <div class="navbar-header" >
-        <nav class="navbar navbar-light" style="background-color:#0d6d8e;">
-            <a class="text-light " style="font-size:14px;" >@yield('op')</a>
-            <a class="text-light " style="font-size:16px;" href="<?= url('/complaints'); ?>" ><b>الخدمات الإلكترونية</b></a>
-            <a class="text-light" href="https://www.qarara.ps/"><img src="/bg.png" height="40px" class="d-inline-block align-top" style="background-color:#0d6d8e;" alt=""></a>    
-        </nav>
-    </div>           
-
-    @yield('content')
-    {{-- footer --}}<br>
-    <footer class="text-center text-lg-start p-2" style="background-color:#0d6d8e;">
-        <!-- Copyright -->
-        <div class="text-center " style="color: white;">
-            <small>  جميع الحقوق محفوظة لدى <a class="text-dark" style="text-decoration:none;" href="https://www.qarara.ps/"><strong style="color:white;">بلدية القرارة</strong></a>
-                 <?php echo "&copy;2015-".date("Y");?><small>
+<div class="navbar-header navbar-brand-area">
+    <nav class="navbar navbar-dark">
+        <span class="text-light">@yield('op')</span>
+        <div class="d-flex align-items-center gap-2">
+            @include('partials.language-switcher')
+            <a class="text-light text-decoration-none" href="{{ route('complaints.index') }}">
+                <b>{{ $appSettings->localized_name ?? __('messages.electronic_services') }}</b>
+            </a>
         </div>
-        <!-- Copyright -->
-      </footer>
+        @if(!empty($appSettings->logo_path))
+            <img src="{{ asset('userFiles/' . $appSettings->logo_path) }}" height="40" alt="logo">
+        @endif
+    </nav>
+</div>
 
+<main class="page-content">
+@yield('content')
+</main>
 
+<footer class="text-center text-lg-start p-3 mt-auto">
+    <div class="text-center">
+        <small>
+            {{ $appSettings->localized_footer_text ?? __('messages.all_rights_reserved') }}
+            @if(!empty($appSettings->website_url))
+                | <a href="{{ $appSettings->website_url }}" class="text-white">{{ $appSettings->localized_name }}</a>
+            @endif
+            &copy; {{ date('Y') }}
+        </small>
+    </div>
+</footer>
 
-    <!-- JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-    <script src="/js/bootstrap.js"></script>
-    <script src="/js/popper.min.js"></script>
-    <script src="/js/jquery-3.6.0.min.js"></script>
-    @yield('scripts')
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/form-select-rtl.js?v=20260614"></script>
+@yield('scripts')
 </body>
 </html>

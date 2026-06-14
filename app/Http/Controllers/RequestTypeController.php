@@ -2,106 +2,74 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRequestTypeRequest;
 use App\Models\Category;
 use App\Models\RequestType;
+use App\Services\TranslationService;
 use Illuminate\Http\Request;
 
 class RequestTypeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function __construct(private TranslationService $translator)
     {
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        $category = Category::all();
-        $requesttype = RequestType::all();
-        return view('createreq_type',compact('category','requesttype'));
+        $categories = Category::orderBy('catName')->get();
+        $requesttypes = RequestType::with('category')->orderBy('request_name')->get();
+
+        return view('createreq_type', compact('categories', 'requesttypes'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function store(StoreRequestTypeRequest $request)
     {
-        $this->validate($request,[
-            'createdRequest' => 'required',
-        ]);
+        $names = $this->translator->resolvePair(
+            $request->createdRequest,
+            $request->createdRequest_en
+        );
+
         RequestType::create([
-            'request_name' => $request->createdRequest,
-            'category_id' => $request->formCat
+            'request_name' => $names['ar'],
+            'request_name_en' => $names['en'] ?: null,
+            'category_id' => $request->formCat,
         ]);
-        
-        return redirect()->route('requesttype.create');
+
+        return redirect()->route('admin.requesttypes.create')->with('success', __('messages.request_type_added'));
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Request $request, $id)
-    {
-        $reqtype = RequestType::findorFail($id);
-        $reqtype->request_name = $request->createdRequest;
-        $reqtype->category_id =$request->formCat;
-        $reqtype->save();
-        return redirect()->route('requesttype.create');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
-        $reqtype = RequestType::findorFail($id);
-        $category = Category::all();
-        return view('editing.reqtype_edit',compact('reqtype','category'));
+        $reqtype = RequestType::findOrFail($id);
+        $categories = Category::orderBy('catName')->get();
+
+        return view('editing.reqtype_edit', compact('reqtype', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $reqtype = RequestType::findorFail($id);
-        $reqtype->catName = $request->createdRequest;
-        $reqtype->category_id =$request->formCat;
+        $request->validate([
+            'createdRequest' => 'required|string|max:255',
+            'createdRequest_en' => 'nullable|string|max:255',
+            'formCat' => 'required|exists:categories,id',
+        ]);
+
+        $arabic = trim($request->createdRequest);
+        $english = trim($request->createdRequest_en ?? '');
+
+        $reqtype = RequestType::findOrFail($id);
+        $reqtype->request_name = $arabic;
+        $reqtype->request_name_en = $english !== '' ? $english : null;
+        $reqtype->category_id = $request->formCat;
         $reqtype->save();
-        return redirect()->route('requesttype.create');
+
+        return redirect()->route('admin.requesttypes.create')->with('success', __('messages.request_type_updated'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        $requesttype = RequestType::findorFail($id)->delete();
-        return redirect()->route('requesttype.create');
+        RequestType::findOrFail($id)->delete();
+
+        return redirect()->route('admin.requesttypes.create')->with('success', __('messages.request_type_deleted'));
     }
 }
